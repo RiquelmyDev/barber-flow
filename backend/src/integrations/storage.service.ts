@@ -33,4 +33,3 @@ export class StorageService {
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
   }
 }
-

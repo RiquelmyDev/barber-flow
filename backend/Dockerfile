@@ -30,3 +30,4 @@ COPY --from=builder /app/prisma ./prisma
 
 # Comando de start
 CMD ["node", "dist/main"]
+

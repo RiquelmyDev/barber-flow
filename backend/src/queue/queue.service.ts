@@ -7,13 +7,14 @@ export class QueueService implements OnModuleInit {
   private readonly logger = new Logger(QueueService.name);
   private readonly connection: ConnectionOptions;
 
-notificationQueue!: Queue;
-webhookQueue!: Queue;
-maintenanceQueue!: Queue;
-
+  notificationQueue!: Queue;
+  webhookQueue!: Queue;
+  maintenanceQueue!: Queue;
 
   constructor(private readonly configService: ConfigService) {
-    const redisUrl = this.configService.get<string>('queue.redisUrl') ?? 'redis://localhost:6379';
+    const redisUrl =
+      this.configService.get<string>('queue.redisUrl') ?? 'redis://localhost:6379';
+
     const parsed = new URL(redisUrl);
 
     const connection: ConnectionOptions = {
