@@ -1,0 +1,16 @@
+export enum UserRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  BARBER = 'BARBER',
+  RECEPTIONIST = 'RECEPTIONIST',
+  ACCOUNTANT = 'ACCOUNTANT',
+  INVENTORY_MANAGER = 'INVENTORY_MANAGER',
+}
+
+export const TenantScopedRoles: UserRole[] = [
+  UserRole.ADMIN,
+  UserRole.BARBER,
+  UserRole.RECEPTIONIST,
+  UserRole.ACCOUNTANT,
+  UserRole.INVENTORY_MANAGER,
+];
