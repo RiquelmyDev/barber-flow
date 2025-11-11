@@ -83,6 +83,7 @@ model User {
   createdAppointments Appointment[] @relation("AppointmentCreator")
   dailyClosures DailyClosure[] @relation("DailyClosureUser")
   inventoryMovements InventoryMovement[]
+  commissionRecords CommissionRecord[]
   auditLogs     AuditLog[]
 }
 

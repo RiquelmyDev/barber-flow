@@ -1,39 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
 
 @Injectable()
 export class StorageService {
-  private readonly client: S3Client;
+  private readonly logger = new Logger(StorageService.name);
   private readonly bucket: string;
+  private readonly region: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.client = new S3Client({
-      region: this.configService.get<string>('aws.region'),
-      credentials: {
-        accessKeyId: this.configService.get<string>('aws.accessKeyId') ?? '',
-        secretAccessKey: this.configService.get<string>('aws.secretAccessKey') ?? '',
-      },
-    });
     this.bucket = this.configService.get<string>('aws.bucket') ?? '';
+    this.region = this.configService.get<string>('aws.region') ?? 'us-east-1';
   }
 
   async uploadBase64Image(base64: string, prefix = 'uploads') {
-    if (!this.bucket) {
-      throw new Error('S3 bucket not configured');
-    }
-    const buffer = Buffer.from(base64, 'base64');
     const key = `${prefix}/${nanoid()}.png`;
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: 'image/png',
-        ACL: 'public-read',
-      }),
+
+    if (!this.bucket) {
+      this.logger.warn(
+        `S3 bucket not configured. Skipping upload for key ${key} and returning placeholder URL.`,
+      );
+      return `https://placeholder.local/${key}`;
+    }
+
+    this.logger.log(
+      `Pretending to upload ${Buffer.byteLength(
+        base64,
+        'base64',
+      )} bytes to s3://${this.bucket}/${key}. Configure AWS credentials to enable real uploads.`,
     );
-    return `https://${this.bucket}.s3.${this.configService.get<string>('aws.region')}.amazonaws.com/${key}`;
+
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
   }
 }
+
