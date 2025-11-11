@@ -1,0 +1,23 @@
+{
+  "navigation": {
+    "overview": "Visão geral",
+    "schedule": "Agenda",
+    "clients": "Clientes",
+    "financial": "Financeiro",
+    "services": "Serviços",
+    "webhooks": "Webhooks"
+  },
+  "auth": {
+    "welcome": "Bem-vindo de volta",
+    "subtitle": "Acesse para gerenciar sua barbearia",
+    "email": "E-mail",
+    "password": "Senha",
+    "signin": "Entrar"
+  },
+  "booking": {
+    "title": "Agendar horário",
+    "confirm": "Confirmar agendamento",
+    "success": "Agendamento reservado! Você receberá uma confirmação em breve.",
+    "error": "Não foi possível reservar. Tente outro horário."
+  }
+}
