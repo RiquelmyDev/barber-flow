@@ -1,3 +1,6 @@
+
+/* eslint-disable react/no-unescaped-entities */
+
 'use client';
 
 import dayjs from 'dayjs';

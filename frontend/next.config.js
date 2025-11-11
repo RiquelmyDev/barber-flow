@@ -13,6 +13,7 @@ const nextConfig = {
     locales: ['en', 'pt'],
     defaultLocale: 'en',
     localeDetection: true,
+    localeDetection: false,
   },
 };
 
