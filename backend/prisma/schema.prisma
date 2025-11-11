@@ -1,0 +1,360 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  BARBER
+  RECEPTIONIST
+  ACCOUNTANT
+  INVENTORY_MANAGER
+}
+
+enum PlanType {
+  BASIC
+  PRO
+}
+
+enum BarbershopStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AppointmentStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  DEBIT_CARD
+  CREDIT_CARD
+  OTHER
+}
+
+enum InventoryMovementType {
+  IN
+  OUT
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationTemplateType {
+  CONFIRMATION
+  REMINDER
+  CANCEL
+  NO_SHOW
+  LOYALTY
+}
+
+enum NotificationStatus {
+  SENT
+  FAILED
+}
+
+model User {
+  id            String     @id @default(uuid())
+  barbershopId  String?
+  barbershop    Barbershop? @relation(fields: [barbershopId], references: [id])
+  role          UserRole
+  email         String     @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  barberProfile BarberProfile?
+  appointments  Appointment[] @relation("AppointmentBarber")
+  createdAppointments Appointment[] @relation("AppointmentCreator")
+  dailyClosures DailyClosure[] @relation("DailyClosureUser")
+  inventoryMovements InventoryMovement[]
+  auditLogs     AuditLog[]
+}
+
+model Barbershop {
+  id           String          @id @default(uuid())
+  name         String
+  slug         String          @unique
+  phone        String?
+  whatsapp     String?
+  email        String?
+  street       String?
+  number       String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+  logoUrl      String?
+  plan         PlanType        @default(BASIC)
+  status       BarbershopStatus @default(ACTIVE)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  config       BarbershopConfig?
+  users        User[]
+  services     Service[]
+  barbers      BarberProfile[]
+  clients      Client[]
+  appointments Appointment[]
+  payments     Payment[]
+  commissionRecords CommissionRecord[]
+  dailyClosures DailyClosure[]
+  products     Product[]
+  inventoryMovements InventoryMovement[]
+  notificationLogs NotificationLog[]
+  webhookConfigs WebhookConfig[]
+  webhookLogs  WebhookLog[]
+  auditLogs    AuditLog[]
+}
+
+model BarbershopConfig {
+  id                         String   @id @default(uuid())
+  barbershopId               String   @unique
+  barbershop                 Barbershop @relation(fields: [barbershopId], references: [id])
+  openingHours               Json?
+  cancellationPolicyHours    Int      @default(2)
+  bufferMinutes              Int      @default(10)
+  acceptsOnlineBooking       Boolean  @default(true)
+  autoApproveOnlineBooking   Boolean  @default(false)
+  reminderHoursBefore        Int      @default(2)
+  noShowFollowupEnabled      Boolean  @default(false)
+  loyaltyPointsPerCurrency   Float    @default(1.0)
+  loyaltyRewardThreshold     Int      @default(300)
+  defaultCommissionPercent   Float?
+  notificationTemplates      Json?
+}
+
+model Service {
+  id                     String   @id @default(uuid())
+  barbershopId           String
+  barbershop             Barbershop @relation(fields: [barbershopId], references: [id])
+  name                   String
+  description            String?
+  durationMinutes        Int
+  price                  Decimal  @default(0)
+  category               String?
+  commissionPercent      Float?
+  commissionFixedAmount  Decimal?
+  isActive               Boolean @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  appointments           AppointmentService[]
+
+  @@index([barbershopId, name])
+  @@unique([id, barbershopId], name: "id_barbershopId")
+}
+
+model BarberProfile {
+  id            String @id @default(uuid())
+  userId        String @unique
+  barbershopId  String
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id])
+  user          User   @relation(fields: [userId], references: [id])
+  avatarUrl     String?
+  bio           String?
+  isPublic      Boolean @default(true)
+}
+
+model Client {
+  id            String   @id @default(uuid())
+  barbershopId  String
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id])
+  name          String
+  phone         String
+  email         String?
+  birthday      DateTime?
+  notes         String?
+  isVip         Boolean @default(false)
+  isBlocked     Boolean @default(false)
+  noShowCount   Int      @default(0)
+  loyaltyPoints Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  appointments  Appointment[]
+  notifications NotificationLog[]
+
+  @@unique([phone, barbershopId], name: "phone_barbershopId")
+  @@unique([id, barbershopId], name: "id_barbershopId")
+  @@index([barbershopId, name])
+}
+
+model Appointment {
+  id               String   @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop @relation(fields: [barbershopId], references: [id])
+  clientId         String
+  client           Client   @relation(fields: [clientId], references: [id])
+  barberId         String?
+  barber           User?    @relation("AppointmentBarber", fields: [barberId], references: [id])
+  services         AppointmentService[]
+  startTime        DateTime
+  endTime          DateTime
+  status           AppointmentStatus @default(PENDING)
+  createdByUserId  String?
+  createdByUser    User?    @relation("AppointmentCreator", fields: [createdByUserId], references: [id])
+  notesInternal    String?
+  cancellationReason String?
+  cancellationType String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  payments         Payment[]
+  commissionRecords CommissionRecord[]
+  notificationLogs NotificationLog[]
+  webhookLogs      WebhookLog[]
+
+  @@index([barbershopId, startTime])
+  @@unique([id, barbershopId], name: "id_barbershopId")
+}
+
+model AppointmentService {
+  id                     String   @id @default(uuid())
+  appointmentId          String
+  serviceId              String
+  appointment            Appointment @relation(fields: [appointmentId], references: [id])
+  service                Service     @relation(fields: [serviceId], references: [id])
+  priceAtTime            Decimal     @default(0)
+  durationMinutesAtTime  Int
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  barbershopId  String
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id])
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  amountTotal   Decimal @default(0)
+  discountAmount Decimal @default(0)
+  amountFinal   Decimal @default(0)
+  currency      String  @default("BRL")
+  paymentMethod PaymentMethod
+  paidAt        DateTime?
+}
+
+model CommissionRecord {
+  id               String   @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop @relation(fields: [barbershopId], references: [id])
+  appointmentId    String
+  appointment      Appointment @relation(fields: [appointmentId], references: [id])
+  barberId         String
+  barber           User @relation(fields: [barberId], references: [id])
+  commissionAmount Decimal @default(0)
+  commissionPercent Float?
+  calculatedAt     DateTime @default(now())
+}
+
+model DailyClosure {
+  id              String   @id @default(uuid())
+  barbershopId    String
+  barbershop      Barbershop @relation(fields: [barbershopId], references: [id])
+  date            DateTime
+  closedByUserId  String
+  closedByUser    User @relation("DailyClosureUser", fields: [closedByUserId], references: [id])
+  totalsByPaymentMethod Json?
+  totalsByBarber Json?
+  notes          String?
+  createdAt      DateTime @default(now())
+  isLocked       Boolean  @default(false)
+}
+
+model Product {
+  id               String   @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop @relation(fields: [barbershopId], references: [id])
+  name             String
+  category         String?
+  costPrice        Decimal @default(0)
+  salePrice        Decimal @default(0)
+  stockQuantity    Int      @default(0)
+  minStockQuantity Int      @default(0)
+  isActive         Boolean  @default(true)
+  movements        InventoryMovement[]
+}
+
+model InventoryMovement {
+  id               String   @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop @relation(fields: [barbershopId], references: [id])
+  productId        String
+  product          Product @relation(fields: [productId], references: [id])
+  type             InventoryMovementType
+  quantity         Int
+  reason           String?
+  createdByUserId  String
+  createdBy        User @relation(fields: [createdByUserId], references: [id])
+  createdAt        DateTime @default(now())
+}
+
+model NotificationLog {
+  id             String   @id @default(uuid())
+  barbershopId   String
+  barbershop     Barbershop @relation(fields: [barbershopId], references: [id])
+  appointmentId  String?
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id])
+  clientId       String?
+  client         Client? @relation(fields: [clientId], references: [id])
+  channel        NotificationChannel
+  templateType   NotificationTemplateType
+  status         NotificationStatus
+  responseCode   String?
+  errorMessage   String?
+  attemptsCount  Int      @default(0)
+  lastAttemptAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+}
+
+model WebhookConfig {
+  id             String   @id @default(uuid())
+  barbershopId   String
+  barbershop     Barbershop @relation(fields: [barbershopId], references: [id])
+  url            String
+  secret         String
+  enabledEvents  Json
+  isActive       Boolean @default(true)
+  logs           WebhookLog[]
+}
+
+model WebhookLog {
+  id               String   @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop @relation(fields: [barbershopId], references: [id])
+  webhookConfigId  String
+  webhookConfig    WebhookConfig @relation(fields: [webhookConfigId], references: [id])
+  eventType        String
+  payload          Json
+  statusCode       Int?
+  errorMessage     String?
+  attemptsCount    Int      @default(0)
+  lastAttemptAt    DateTime @default(now())
+  createdAt        DateTime @default(now())
+  appointmentId    String?
+  appointment      Appointment? @relation(fields: [appointmentId], references: [id])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  barbershopId  String?
+  barbershop    Barbershop? @relation(fields: [barbershopId], references: [id])
+  userId        String
+  user          User @relation(fields: [userId], references: [id])
+  action        String
+  entityType    String
+  entityId      String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+}
