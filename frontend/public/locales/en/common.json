@@ -1,0 +1,23 @@
+{
+  "navigation": {
+    "overview": "Overview",
+    "schedule": "Schedule",
+    "clients": "Clients",
+    "financial": "Financial",
+    "services": "Services",
+    "webhooks": "Webhooks"
+  },
+  "auth": {
+    "welcome": "Welcome back",
+    "subtitle": "Sign in to manage your barbershop experience",
+    "email": "Email",
+    "password": "Password",
+    "signin": "Sign in"
+  },
+  "booking": {
+    "title": "Book an appointment",
+    "confirm": "Confirm booking",
+    "success": "Appointment reserved! You'll receive a confirmation soon.",
+    "error": "Unable to book. Please try another time slot."
+  }
+}

@@ -1,0 +1,15 @@
+import { UserRole } from '../common/enums/role.enum';
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: UserRole;
+  barbershopId?: string | null;
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  barbershopId?: string | null;
+}
