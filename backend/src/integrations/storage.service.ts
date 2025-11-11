@@ -15,6 +15,7 @@ export class StorageService {
 
   async uploadBase64Image(base64: string, prefix = 'uploads') {
     const key = `${prefix}/${nanoid()}.png`;
+
     if (!this.bucket) {
       this.logger.warn(
         `S3 bucket not configured. Skipping upload for key ${key} and returning placeholder URL.`,
@@ -23,9 +24,13 @@ export class StorageService {
     }
 
     this.logger.log(
-      `Pretending to upload ${Buffer.byteLength(base64, 'base64')} bytes to s3://${this.bucket}/${key}. Configure AWS credentials to enable real uploads.`,
+      `Pretending to upload ${Buffer.byteLength(
+        base64,
+        'base64',
+      )} bytes to s3://${this.bucket}/${key}. Configure AWS credentials to enable real uploads.`,
     );
 
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
   }
 }
+
